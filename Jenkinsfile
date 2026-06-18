@@ -44,6 +44,6 @@ pipeline {
   post {
     always   { sh 'docker logout' }
     success  { echo "Deployed ${IMAGE_TAG} successfully" }
-    failure  { mail to: 'devops@yourcompany.com', subject: "Build FAILED: ${env.JOB_NAME}" }
+    failure  { mail to: 'thadhee2005@gmail.com', subject: "Build FAILED: ${env.JOB_NAME}" }
   }
 }
