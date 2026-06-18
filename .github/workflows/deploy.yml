@@ -1,1 +1,63 @@
 
+name: Build and Deploy Python App
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: thammanadheerajpriyatham/devopsapp
+  IMAGE_TAG: ${{ github.run_number }}
+  EC2_HOST: ec2-user@ec2-23-23-96-253.compute-1.amazonaws.com
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+
+      - name: Push Docker Images
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
+          docker push $IMAGE_NAME:latest
+
+      - name: Configure SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ec2-23-23-96-253.compute-1.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2 using Helm
+        run: |
+          ssh $EC2_HOST "
+            helm upgrade --install devops /home/ec2-user/Python-App-DevOps/helm/devops \
+              --set image.repository=$IMAGE_NAME \
+              --set image.tag=$IMAGE_TAG \
+              --namespace default
+          "
+
+      - name: Logout Docker
+        if: always()
+        run: docker logout
+
+      - name: Deployment Success Message
+        if: success()
+        run: echo "Deployed $IMAGE_TAG successfully"
