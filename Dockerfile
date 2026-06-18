@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only requirements to leverage Docker layer caching
-COPY requirements.txt .
+COPY  ./src/requirements.txt .
 
 # Install dependencies into a local user directory
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -25,7 +25,7 @@ RUN groupadd -r devopsuser && useradd -r -g devopsuser devopsuser
 
 # Copy installed dependencies from the builder stage
 COPY --from=builder /root/.local /home/devopsuser/.local
-COPY app.py .
+COPY ./src/app.py .
 
 # Ensure the non-root user owns the app directory (needed to write app.log)
 RUN chown -R devopsuser:devopsuser /app
