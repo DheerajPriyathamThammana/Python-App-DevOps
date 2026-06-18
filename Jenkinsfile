@@ -31,7 +31,7 @@ pipeline {
         sshagent(['ec2-ssh-key']) {
           sh """
             ssh -o StrictHostKeyChecking=no ${EC2_HOST} '
-              helm upgrade --install devops ./helm/devops \
+              helm upgrade --install devops ./home/ec2-user/Python-App-DevOps/helm/devops/ \
                 --set image.repository=${IMAGE_NAME} \
                 --set image.tag=${IMAGE_TAG} \
                 --namespace default
